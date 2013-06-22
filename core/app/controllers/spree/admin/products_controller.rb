@@ -57,16 +57,17 @@ module Spree
         edit_admin_product_url(@product)
       end
 
-      # Allow different formats of json data to suit different ajax calls
-      def json_data
-        json_format = params[:json_format] or 'default'
-        case json_format
-        when 'basic'
-          collection.map {|p| {'id' => p.id, 'name' => p.name}}.to_json
-        else
-          collection.to_json(:include => {:variants => {:include => {:option_values => {:include => :option_type}, 
-                                                        :images => {:only => [:id], :methods => :mini_url}}}, 
-                                                        :images => {:only => [:id], :methods => :mini_url}, :master => {}})
+        # Allow different formats of json data to suit different ajax calls
+        def json_data
+          json_format = params[:json_format] or 'default'
+          case json_format
+          when 'basic'
+            collection.map {|p| {'id' => p.id, 'name' => p.name}}.to_json
+          else
+            collection.to_json(:include => {:variants => {:include => {:option_values => {:include => :option_type},
+                                                          :images => {:only => [:id], :methods => :mini_url}}},
+                                                          :images => {:only => [:id], :methods => :mini_url}, :master => {}})
+          end
         end
       end
 
@@ -84,8 +85,19 @@ module Spree
 
             params[:q][:s] ||= "name_asc"
 
-            @search = super.search(params[:q])
-            @collection = @search.result.group_by_products_id.includes([:master, {:variants => [:images, :option_values]}]).page(params[:page]).per(Spree::Config[:admin_products_per_page])
+            @search = super.ransack(params[:q])
+            @collection = @search.result.
+              group_by_products_id.
+              includes([:master, {:variants => [:images, :option_values]}]).
+              page(params[:page]).
+              per(Spree::Config[:admin_products_per_page])
+
+            if params[:q][:s].include?("master_price")
+              # By applying the group in the main query we get an undefined method gsub for Arel::Nodes::Descending
+              # It seems to only work when the price is actually being sorted in the query
+              # To be investigated later.
+              @collection = @collection.group("spree_variants.price")
+            end
           else
             includes = [{:variants => [:images,  {:option_values => :option_type}]}, {:master => :images}]
 
