@@ -98,7 +98,7 @@ module Spree
       end.join("\n").html_safe
     end
 
-    def breadcrumbs(taxon, separator="&nbsp;&raquo;&nbsp;")
+    def spree_breadcrumbs(taxon, separator="&nbsp;&raquo;&nbsp;")
       return "" if current_page?("/") || taxon.nil?
       separator = raw(separator)
       crumbs = [content_tag(:li, link_to(t(:home) , root_path) + separator)]

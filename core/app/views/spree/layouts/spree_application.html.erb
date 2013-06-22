@@ -46,7 +46,7 @@
         <% end %>
 
         <div id="content" class="columns omega <% if !content_for?(:sidebar) %> sixteen alpha <% else %> twelve <% end %>" data-hook>
-          <%= breadcrumbs(@taxon) %>
+          <%= spree_breadcrumbs(@taxon) %>
           <%= flash_messages %>
           <%= yield %>
         </div>

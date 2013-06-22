@@ -5,6 +5,7 @@ module Spree
 
       before_filter :check_json_authenticity, :only => :index
       before_filter :load_data, :except => :index
+      create.before :create_before
       update.before :update_before
 
       def show
@@ -48,9 +49,9 @@ module Spree
 
       protected
 
-      def find_resource
-        Product.find_by_permalink!(params[:id])
-      end
+        def find_resource
+          Product.find_by_permalink!(params[:id])
+        end
 
       def location_after_save
         edit_admin_product_url(@product)
@@ -77,19 +78,18 @@ module Spree
       def collection
         return @collection if @collection.present?
 
-        unless request.xhr?
-          params[:search] ||= {}
-          # Note: the MetaSearch scopes are on/off switches, so we need to select "not_deleted" explicitly if the switch is off
-          if params[:search][:deleted_at_is_null].nil?
-            params[:search][:deleted_at_is_null] = "1"
-          end
+          unless request.xhr?
+            params[:q] ||= {}
+            # Note: the Ransack scopes are on/off switches, so we need to select "not_deleted" explicitly if the switch is off
+            if params[:q][:deleted_at_is_null].nil?
+              params[:q][:deleted_at_is_null] = "1"
+            end
 
-          params[:search][:meta_sort] ||= "name.asc"
-          @search = super.metasearch(params[:search])
-
-          @collection = @search.relation.group_by_products_id.includes([:master, {:variants => [:images, :option_values]}]).page(params[:page]).per(Spree::Config[:admin_products_per_page])
-        else
-          includes = [{:variants => [:images,  {:option_values => :option_type}]}, :master, :images]
+            params[:q][:meta_sort] ||= "name.asc"
+            @search = super.search(params[:q])
+            @collection = @search.result.group_by_products_id.includes([:master, {:variants => [:images, :option_values]}]).page(params[:page]).per(Spree::Config[:admin_products_per_page])
+          else
+            includes = [{:variants => [:images,  {:option_values => :option_type}]}, {:master => :images}]
 
           @collection = super.where(["name #{LIKE} ?", "%#{params[:q]}%"])
           @collection = @collection.includes(includes).limit(params[:limit] || 10)
