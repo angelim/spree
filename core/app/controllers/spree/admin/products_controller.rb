@@ -53,9 +53,9 @@ module Spree
           Product.find_by_permalink!(params[:id])
         end
 
-      def location_after_save
-        edit_admin_product_url(@product)
-      end
+        def location_after_save
+          edit_admin_product_url(@product)
+        end
 
         # Allow different formats of json data to suit different ajax calls
         def json_data
@@ -69,21 +69,20 @@ module Spree
                                                           :images => {:only => [:id], :methods => :mini_url}, :master => {}})
           end
         end
-      end
 
-      def load_data
-        @tax_categories = TaxCategory.order(:name)
-        @shipping_categories = ShippingCategory.order(:name)
-      end
+        def load_data
+          @tax_categories = TaxCategory.order(:name)
+          @shipping_categories = ShippingCategory.order(:name)
+        end
 
-      def collection
-        return @collection if @collection.present?
+        def collection
+          return @collection if @collection.present?
 
           unless request.xhr?
             params[:q] ||= {}
             params[:q][:deleted_at_null] ||= "1"
 
-            params[:q][:s] ||= "name_asc"
+            params[:q][:s] ||= "name asc"
 
             @search = super.ransack(params[:q])
             @collection = @search.result.
@@ -101,17 +100,20 @@ module Spree
           else
             includes = [{:variants => [:images,  {:option_values => :option_type}]}, {:master => :images}]
 
-          @collection = super.where(["name #{LIKE} ?", "%#{params[:q]}%"])
-          @collection = @collection.includes(includes).limit(params[:limit] || 10)
+            @collection = super.where(["name #{LIKE} ?", "%#{params[:q]}%"])
+            @collection = @collection.includes(includes).limit(params[:limit] || 10)
 
-          tmp = super.where(["#{Variant.table_name}.sku #{LIKE} ?", "%#{params[:q]}%"])
-          tmp = tmp.includes(:variants_including_master).limit(params[:limit] || 10)
-          @collection.concat(tmp)
-
-          @collection.uniq
+            tmp = super.where(["#{Variant.table_name}.sku #{LIKE} ?", "%#{params[:q]}%"])
+            tmp = tmp.includes(:variants_including_master).limit(params[:limit] || 10)
+            @collection.concat(tmp)
+          end
+          @collection
         end
 
-      end
+        def create_before
+          return if params[:product][:prototype_id].blank?
+          @prototype = Spree::Prototype.find(params[:product][:prototype_id])
+        end
 
         def update_before
           # note: we only reset the product properties if we're receiving a post from the form on that tab
