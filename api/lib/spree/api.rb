@@ -1,9 +1,9 @@
-require 'spree_core'
-require 'spree_auth'
+require 'spree/core'
+
+require 'rabl'
 
 module Spree
   module Api
-
   end
 end
 

@@ -36,6 +36,7 @@ require 'acts_as_list'
 require 'active_merchant'
 require 'ransack'
 require 'jquery-rails'
+require 'select2-rails'
 
 module Spree
   module Core

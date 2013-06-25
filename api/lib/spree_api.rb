@@ -1,3 +1,3 @@
 require 'spree/api'
-require 'spree/core'
-require 'spree_auth'
+require 'spree/api/responders'
+require 'versioncake'

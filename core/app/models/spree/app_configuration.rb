@@ -63,7 +63,7 @@ module Spree
     preference :site_url, :string, :default => 'demo.spreecommerce.com'
     preference :tax_using_ship_address, :boolean, :default => true
     preference :track_inventory_levels, :boolean, :default => true # will not track on_hand values for variants /products
-
+    preference :redirect_https_to_http, :boolean, :default => false
     # searcher_class allows spree extension writers to provide their own Search class
     def searcher_class
       @searcher_class ||= Spree::Core::Search::Base

@@ -1,4 +1,4 @@
-Spree::Core::Engine.routes.prepend do
+Spree::Core::Engine.routes.draw do
   namespace :admin do
     resources :users do
       member do
@@ -8,29 +8,78 @@ Spree::Core::Engine.routes.prepend do
     end
   end
 
-  namespace :api do
-    resources :shipments, :except => [:new,:edit] do
-      put :event, :on => :member
-      resources :inventory_units, :except => [:new,:edit] do
-        put :event, :on => :member
-      end
+  namespace :api, :defaults => { :format => 'json' } do
+    resources :products do
+      resources :variants
+      resources :product_properties
     end
-    resources :orders, :except => [:new,:edit] do
-      put :event, :on => :member
-      resources :shipments, :except => [:new,:edit]
-      resources :line_items, :except => [:new,:edit]
-      resources :inventory_units, :except => [:new,:edit] do
-        put :event, :on => :member
-      end
-    end
-    resources :inventory_units, :except => [:new,:edit] do
-      put :event, :on => :member
-    end
-    resources :products, :except => [:new,:edit]
-    resources :countries, :except => [:new,:edit] do
-      resources :states, :except => [:new,:edit]
-    end
-    resources :states, :except => [:new,:edit]
-  end
 
+    resources :images
+    resources :checkouts do
+      member do
+        put :next
+      end
+    end
+
+    resources :variants, :only => [:index] do
+    end
+
+    resources :option_types do
+      resources :option_values
+    end
+
+    resources :orders do
+      resources :return_authorizations
+      member do
+        put :address
+        put :delivery
+        put :cancel
+        put :empty
+      end
+
+      resources :line_items
+      resources :payments do
+        member do
+          put :authorize
+          put :capture
+          put :purchase
+          put :void
+          put :credit
+        end
+      end
+
+      resources :shipments, :only => [:create, :update] do
+        member do
+          put :ready
+          put :ship
+          put :add
+          put :remove
+        end
+      end
+    end
+
+    resources :zones
+    resources :countries, :only => [:index, :show]
+    resources :states,    :only => [:index, :show]
+    resources :addresses, :only => [:show, :update]
+
+    resources :taxonomies do
+      member do
+        get :jstree
+      end
+      resources :taxons do
+        member do
+          get :jstree
+        end
+      end
+    end
+    resources :taxons, :only => [:index]
+    resources :inventory_units, :only => [:show, :update]
+    resources :users
+    resources :properties
+    resources :stock_locations do
+      resources :stock_movements
+      resources :stock_items
+    end
+  end
 end

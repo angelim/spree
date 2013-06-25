@@ -1,69 +1,44 @@
-# This file is copied to ~/spec when you run 'ruby script/generate rspec'
-# from the project root directory.
+if ENV["COVERAGE"]
+  # Run Coverage report
+  require 'simplecov'
+  SimpleCov.start do
+    add_group 'Controllers', 'app/controllers'
+    add_group 'Helpers', 'app/helpers'
+    add_group 'Mailers', 'app/mailers'
+    add_group 'Models', 'app/models'
+    add_group 'Views', 'app/views'
+    add_group 'Libraries', 'lib'
+  end
+end
+
+# This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV["RAILS_ENV"] ||= 'test'
 require File.expand_path("../dummy/config/environment", __FILE__)
 require 'rspec/rails'
-require 'database_cleaner'
-require 'spree/core/testing_support/factories'
-require 'spree/core/testing_support/env'
+require 'rspec/autorun'
 
-# Requires supporting files with custom matchers and macros, etc,
-# in ./support/ and its subdirectories.
-Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
+# Requires supporting ruby files with custom matchers and macros, etc,
+# in spec/support/ and its subdirectories.
+Dir[File.dirname(__FILE__) + "/support/**/*.rb"].each {|f| require f}
 
-# load default data for tests
-require 'active_record/fixtures'
+require 'spree/testing_support/factories'
+require 'spree/testing_support/preferences'
+
+require 'spree/api/testing_support/helpers'
+require 'spree/api/testing_support/setup'
 
 RSpec.configure do |config|
-  # == Mock Framework
-  #
-  # If you prefer to use mocha, flexmock or RR, uncomment the appropriate line:
-  #
-  # config.mock_with :mocha
-  # config.mock_with :flexmock
-  # config.mock_with :rr
-  config.mock_with :rspec
+  config.backtrace_clean_patterns = [/gems\/activesupport/, /gems\/actionpack/, /gems\/rspec/]
+  config.color = true
 
-  config.fixture_path = "#{::Rails.root}/spec/fixtures"
+  config.include FactoryGirl::Syntax::Methods
+  config.include Spree::Api::TestingSupport::Helpers, :type => :controller
+  config.extend Spree::Api::TestingSupport::Setup, :type => :controller
+  config.include Spree::TestingSupport::Preferences, :type => :controller
 
-  # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, comment the following line or assign false
-  # instead of true.
-  config.use_transactional_fixtures = false
-
-  config.before(:suite) do
-    DatabaseCleaner.strategy = :truncation
+  config.before do
+    Spree::Api::Config[:requires_authentication] = true
   end
 
-  config.before(:each) do
-    DatabaseCleaner.start
-  end
-
-  config.after(:each) do
-    DatabaseCleaner.clean
-  end
-
-  config.include Spree::Core::Engine.routes.url_helpers,
-    :example_group => {
-      :file_path => /\bspec\/requests\//
-    }
-
-  config.include Devise::TestHelpers, :type => :controller
-  config.include Rack::Test::Methods, :type => :request
-end
-
-def api_login(user)
-  authorize user.authentication_token, "X"
-end
-
-shared_examples_for "status ok" do
-  it "should return status 200" do
-    last_response.status.should == 200
-  end
-end
-
-shared_examples_for "unauthorized" do
-  it "should return status 401" do
-    last_response.status.should == 401
-  end
+  config.fail_fast = ENV['FAIL_FAST'] || false
 end

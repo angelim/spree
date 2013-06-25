@@ -29,6 +29,8 @@ module Spree
     def has_role?(role_in_question)
       roles.any? { |role| role.name == role_in_question.to_s }
     end
+    alias_method :has_spree_role?, :has_role?
+
 
     # Creates an anonymous user.  An anonymous user is basically an auto-generated +User+ account that is created for the customer
     # behind the scenes and its completely transparently to the customer.  All +Orders+ must have a +User+ so this is necessary
