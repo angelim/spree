@@ -32,8 +32,9 @@ module Spree
       end
 
       def set_viewable
-        if params[:image].has_key? :viewable_id
-          if params[:image][:viewable_id] == "All"
+        viewable_id = params[:image].has_key?(:viewable_id) && params[:image].delete(:viewable_id)
+        if viewable_id
+          if viewable_id == "All"
             @image.viewable = @product
           else
             @image.viewable_type = 'Spree::Variant'
