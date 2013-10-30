@@ -1,10 +1,12 @@
 Spree::BaseController.class_eval do
   before_filter :set_current_user
+  before_filter :ensure_api_key
 
   # graceful error handling for cancan authorization exceptions
   rescue_from CanCan::AccessDenied do |exception|
     return unauthorized
   end
+  helper_method :try_spree_current_user
 
   private
     # Needs to be overriden so that we use Spree's Ability rather than anyone else's.
@@ -30,6 +32,24 @@ Spree::BaseController.class_eval do
         end
         format.json do
           render :text => "Not Authorized \n", :status => 401
+        end
+      end
+    end
+
+    def try_spree_current_user
+      if respond_to?(:spree_current_user)
+        spree_current_user
+      elsif respond_to?(:current_user)
+        current_user
+      else
+        nil
+      end
+    end
+
+    def ensure_api_key
+      if user = try_spree_current_user
+        if user.respond_to?(:spree_api_key) && user.spree_api_key.blank?
+          user.generate_spree_api_key!
         end
       end
     end
