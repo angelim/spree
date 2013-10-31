@@ -136,33 +136,8 @@ module Spree
     # for adding products which are closely related to existing ones
     # define "duplicate_extra" for site-specific actions, eg for additional fields
     def duplicate
-      p = self.dup
-      p.name = 'COPY OF ' + self.name
-      p.deleted_at = nil
-      p.created_at = p.updated_at = nil
-      p.taxons = self.taxons
-
-      p.product_properties = self.product_properties.map { |q| r = q.dup; r.created_at = r.updated_at = nil; r }
-
-      image_dup = lambda { |i| j = i.dup; j.attachment = i.attachment.clone; j }
-      p.images = self.images.map { |i| image_dup.call i }
-
-      master = Spree::Variant.find_by_product_id_and_is_master(self.id, true)
-      variant = master.dup
-      variant.sku = 'COPY OF ' + master.sku
-      variant.deleted_at = nil
-      variant.images = master.images.map { |i| image_dup.call i }
-      p.master = variant
-
-      if self.has_variants?
-        # don't dup the actual variants, just the characterising types
-        p.option_types = self.option_types
-      else
-      end
-      # allow site to do some customization
-      p.send(:duplicate_extra, self) if p.respond_to?(:duplicate_extra)
-      p.save!
-      p
+      duplicator = ProductDuplicator.new(self)
+      duplicator.duplicate
     end
 
     # use deleted? rather than checking the attribute directly. this
